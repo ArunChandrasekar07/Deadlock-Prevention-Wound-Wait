@@ -43,4 +43,4 @@ $seats = $_GET["seats"] ?? "";
     </div>
   </div>
 </body>
-</html
+</html>
