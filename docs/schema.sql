@@ -1,0 +1,9 @@
+CREATE DATABASE IF NOT EXISTS railway_demo;
+USE railway_demo;
+
+CREATE TABLE IF NOT EXISTS seat_locks (
+  seat_id VARCHAR(64) PRIMARY KEY,
+  holder_txn VARCHAR(64) NOT NULL,
+  holder_ts INT NOT NULL,
+  lock_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

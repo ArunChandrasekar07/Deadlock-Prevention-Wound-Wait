@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <style>
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    body{margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;background:#f6f6f6}
+    .card{width:360px;background:#fff;padding:22px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+    h1{font-size:22px;margin:0 0 14px}
+    input{width:100%;padding:10px 12px;margin:8px 0;border:1px solid #ddd;border-radius:10px}
+    button{width:100%;padding:10px 12px;border:0;border-radius:10px;background:#6a1b9a;color:#fff;font-weight:700;margin-top:10px;cursor:pointer}
+    .link{margin-top:10px;font-size:13px}
+    a{text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Login</h1>
+    <form action="train.php" method="GET">
+      <input type="text" name="user" placeholder="Username" required>
+      <input type="password" name="pass" placeholder="Password" required>
+      <button type="submit">Login</button>
+    </form>
+    <div class="link">No account? <a href="./register.html">Register</a></div>
+  </div>
+</body>
+</html>
