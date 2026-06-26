@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="src/assets/indian_railways_logo.png" alt="Railway Logo" width="80"/>
+<img src="indian_railways_logo.png" alt="Railway Logo" width="80"/>
 
 # 🚆 Deadlock-Free Railway Reservation
 ### Concurrent Seat Booking with Wound-Wait Deadlock Prevention
