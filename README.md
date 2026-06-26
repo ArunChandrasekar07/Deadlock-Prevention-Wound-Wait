@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="src/assets/TRAIN_LOGO.jpeg" alt="Railway Logo" width="80"/>
+<img src="src/assets/TRAIN_LOGO.jpg" alt="Railway Logo" width="80"/>
 
 # 🚆 Deadlock-Free Railway Reservation
 ### Concurrent Seat Booking with Wound-Wait Deadlock Prevention
