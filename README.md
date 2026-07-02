@@ -1,9 +1,20 @@
 <div align="center">
 
-<img src="src/assets/TRAIN_LOGO.jpg" alt="Railway Logo" width="80"/>
+<img src="./src/assets/TRAIN_LOGO.jpg" alt="Railway Logo" width="100"/>
 
 # 🚆 Deadlock-Free Railway Reservation
+
 ### Concurrent Seat Booking with Wound-Wait Deadlock Prevention
+
+**Production-grade demonstration of deadlock prevention in concurrent database systems.**
+
+Built from scratch — applying **Operating Systems concurrency theory** to a real-world railway booking system.
+
+<br/>
+
+<img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=18&duration=2600&pause=900&color=FF6B6B&center=true&vCenter=true&width=850&lines=Deadlock+Prevention;Wound-Wait+Algorithm;Row-Level+Locking;Concurrent+Transaction+Management" />
+
+<br/><br/>
 
 [![PHP](https://img.shields.io/badge/PHP-8.0+-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://mysql.com)
@@ -11,219 +22,259 @@
 [![Algorithm](https://img.shields.io/badge/Algorithm-Wound--Wait-FF6B6B?style=for-the-badge)](#)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-**A production-grade demonstration of deadlock prevention in concurrent database systems.**
-Built from scratch — no frameworks, no shortcuts. Pure OS-level concurrency theory applied to a real booking problem.
+<br/>
 
-[🔍 Core Algorithm](#-core-algorithm) • [🏗 Architecture](#-architecture) • [⚡ Quick Start](#-quick-start) • [📊 Flow](#-booking-flow)
-
----
+[🔐 Core Algorithm](#-core-algorithm) • [🏗 Architecture](#-architecture) • [⚡ Quick Start](#-quick-start) • [📊 Booking Flow](#-booking-flow)
 
 </div>
 
-## 🧠 The Problem
+---
 
-When multiple users try to book the **same seat simultaneously**, naive implementations lead to:
+# 🧠 The Problem
 
-| Issue | What happens |
-|-------|-------------|
-| **Race condition** | Two users book the same seat |
-| **Deadlock** | Transaction A waits for B, B waits for A — forever |
-| **Livelock** | Transactions keep retrying, never progressing |
+When multiple users attempt to book the **same seat simultaneously**, naive systems suffer from serious concurrency issues:
 
-This project solves all three using **Wound-Wait timestamp ordering** — the same algorithm used in production RDBMS systems like PostgreSQL and Oracle.
+| Issue | Description |
+|---|---|
+| Race Condition | Two users book the same seat |
+| Deadlock | Transaction A waits for B, B waits for A forever |
+| Livelock | Transactions repeatedly retry without progress |
+
+This project solves all three using **Wound-Wait timestamp ordering**, a classic deadlock prevention algorithm used in enterprise RDBMS systems.
 
 ---
 
-## ⚙️ Core Algorithm
+# 📈 System Metrics
 
-### Wound-Wait: How it works
+| Metric | Value |
+|---|---:|
+| Algorithm | Wound-Wait |
+| Lock Type | Row-Level Lock |
+| DB Isolation | Transactional |
+| Deadlock Prevention | Yes |
+| Starvation Prevention | Yes |
+| Rollback Strategy | Deterministic |
 
-Every booking request is assigned a **timestamp** when it starts. When two transactions conflict over the same seat, the algorithm makes a deterministic decision:
+---
 
+# ⚙️ Core Algorithm
+
+## Wound-Wait Strategy
+
+Every transaction gets a timestamp.
+
+When two transactions conflict:
+
+```text
+IF requester is OLDER:
+    → WOUND holder
+    → Preempt lock
+    → Proceed
+
+IF requester is YOUNGER:
+    → WAIT
+    → Retry later
 ```
-IF requesting_transaction is OLDER (smaller timestamp):
-    → WOUND the holder (evict it, take the lock)
-    → Older transaction proceeds immediately
 
-IF requesting_transaction is YOUNGER (larger timestamp):
-    → WAIT for the holder to finish
-    → Younger transaction blocks until lock is free
-```
+This guarantees **no circular wait**, eliminating deadlocks.
 
-> This guarantees **no circular wait** — a core Coffman condition for deadlock.
-> Older transactions always win. No cycle can form.
+---
 
-### Implementation — `wound_wait.php`
+## Implementation — `wound_wait.php`
 
 ```php
 function wound_wait_decision($request_ts, $holder_ts) {
-    if ($request_ts < $holder_ts) return "WOUND";  // older wins → preempt
-    return "WAIT";                                   // younger waits
+    if ($request_ts < $holder_ts) return "WOUND";
+    return "WAIT";
 }
 ```
 
-Simple. Elegant. Provably correct.
+Simple. Elegant. Provably deadlock-free.
 
 ---
 
-## 🔐 Lock Manager
+# 🔐 Lock Manager
 
-The heart of the system — `lock_service.php` implements row-level locking with MySQL's `FOR UPDATE`:
+Implemented in `lock_service.php` using MySQL row-level locking:
 
 ```php
 function acquire_seat_lock($conn, $seat_id, $txn_id, $txn_ts) {
-    // Atomically check and acquire lock using SELECT FOR UPDATE
     $stmt = $conn->prepare(
         "SELECT holder_txn, holder_ts FROM seat_locks WHERE seat_id=? FOR UPDATE"
     );
-
-    // If seat is free → acquire immediately
-    // If occupied → apply Wound-Wait decision
-    //   WOUND  → evict holder, acquire lock
-    //   WAIT   → return false, caller retries
 }
 ```
 
-**Key guarantees:**
-- ✅ `FOR UPDATE` prevents phantom reads during lock check
-- ✅ Atomic eviction — no window between check and acquire  
-- ✅ Timestamp preserved on retry — starvation-free
-- ✅ Thread-safe across concurrent PHP processes
+### Guarantees
+
+- ✅ Prevents phantom reads  
+- ✅ Atomic lock acquisition  
+- ✅ Safe under concurrent requests  
+- ✅ Starvation-free retry behavior  
+- ✅ Thread-safe across PHP workers  
 
 ---
 
-## 🏗 Architecture
+# 🏗 Architecture
 
+```text
+User Request
+     │
+     ▼
+Frontend (HTML/CSS/JS)
+     │
+     ▼
+PHP Backend
+     │
+     ▼
+Lock Manager
+(Wound-Wait)
+     │
+     ▼
+MySQL Database
+(Row-level locks)
 ```
+
+---
+
+# 📂 Project Structure
+
+```text
 Deadlock-Prevention-Wound-Wait/
 │
 ├── docs/
-│   └── schema.sql              # DB schema — seat_locks table with timestamp cols
+│   └── schema.sql
 │
 └── src/
     ├── assets/
-    │   ├── indian_railways_logo.png
-    │   └── Vande-Bharat-Sleeper-Coach.jpg
+    │   ├── TRAIN_LOGO.jpg
+    │   └── coach.jpg
     │
     ├── backend/
-    │   ├── db.php              # MySQL connection factory
-    │   ├── wound_wait.php      # Core Wound-Wait decision function
-    │   ├── lock_service.php    # Row-level lock manager (FOR UPDATE + preemption)
-    │   ├── lock_selected_seats.php  # Seat locking endpoint
-    │   ├── seat.php            # Seat availability queries
-    │   ├── train.php           # Train listing
-    │   ├── tickets.php         # Ticket generation
-    │   └── payment.php         # Payment timer handler
+    │   ├── db.php
+    │   ├── wound_wait.php
+    │   ├── lock_service.php
+    │   ├── seat.php
+    │   ├── train.php
+    │   ├── tickets.php
+    │   └── payment.php
     │
     ├── frontend/
-    │   ├── login.html          # Auth entry point
-    │   ├── register.html       # User registration
-    │   └── index.html          # Main booking UI
+    │   ├── login.html
+    │   ├── register.html
+    │   └── index.html
     │
     └── styles/
-        └── index.css           # Styling
+        └── index.css
 ```
 
 ---
 
-## 📊 Booking Flow
+# 📊 Booking Flow
 
-```
+```text
 User selects seats
         │
         ▼
-BEGIN TRANSACTION ──── timestamp assigned
+BEGIN TRANSACTION
+(timestamp assigned)
         │
         ▼
-acquire_seat_lock(seat_id, txn_id, txn_ts)
+Acquire Lock
         │
-        ├─── Seat FREE? ──────────────────► INSERT lock → proceed to payment
+        ├── FREE → Lock seat
         │
-        └─── Seat LOCKED?
-                │
-                ├── I am OLDER (smaller ts) ──► WOUND holder → evict → take lock
-                │
-                └── I am YOUNGER (larger ts) ──► WAIT → retry after delay
-                                                        │
-                                                      (no new timestamp on retry
-                                                       → starvation prevented)
+        └── LOCKED?
+             │
+             ├── Older txn → WOUND
+             │
+             └── Younger txn → WAIT
         │
         ▼
-Payment timer (60s)
+Payment (60 sec)
         │
         ▼
-COMMIT → ticket generated / TIMEOUT → lock released
+COMMIT / RELEASE LOCK
 ```
 
 ---
 
-## 🆚 Why Wound-Wait over other approaches?
+# 🆚 Why Wound-Wait?
 
-| Approach | Deadlock-free? | Starvation-free? | Complexity |
-|----------|---------------|-----------------|------------|
-| No locking | ❌ | ✅ | Low |
-| Pessimistic lock (naive) | ❌ | ❌ | Low |
+| Approach | Deadlock Free | Starvation Free | Complexity |
+|---|---|---|---|
+| No Locking | ❌ | ✅ | Low |
+| Naive Locking | ❌ | ❌ | Low |
 | Wait-Die | ✅ | ✅ | Medium |
-| **Wound-Wait** ✅ | ✅ | ✅ | Medium |
-| Banker's Algorithm | ✅ | ✅ | High |
+| **Wound-Wait** | ✅ | ✅ | Medium |
+| Banker's | ✅ | ✅ | High |
 
-Wound-Wait generates **fewer rollbacks** than Wait-Die in high-concurrency scenarios — making it the preferred choice for booking systems.
+Wound-Wait produces **fewer rollbacks** than Wait-Die in high contention systems.
 
 ---
 
-## ⚡ Quick Start
+# ⚡ Quick Start
 
 ### Prerequisites
-- XAMPP / WAMP (PHP 8.0+, MySQL 8.0)
-- phpMyAdmin
+
+- XAMPP / WAMP  
+- PHP 8+  
+- MySQL 8+  
+- phpMyAdmin  
+
+---
 
 ### Setup
 
 ```bash
-# 1. Clone the repo
-git clone https://github.com/ArunChandrasekar07/Deadlock-Prevention-Wound-Wait.git
+git clone https://github.com/ArunChandrasekar07/Deadlock-Prevention-Wound-Wait
+```
 
-# 2. Move src/ to your PHP server root
+```bash
+# Move project
 cp -r src/ /xampp/htdocs/railway/
+```
 
-# 3. Create the database
-# Open phpMyAdmin → import docs/schema.sql
+```bash
+# Import DB
+docs/schema.sql
+```
 
-# 4. Update DB credentials
-# Edit src/backend/db.php with your MySQL creds
-
-# 5. Open in browser
-# http://localhost/railway/src/frontend/login.html
+```bash
+# Run
+http://localhost/railway/src/frontend/login.html
 ```
 
 ---
 
-## 🗄 Database Schema
+# 🗄 Database Schema
 
 ```sql
 CREATE TABLE seat_locks (
-    seat_id     VARCHAR(20) PRIMARY KEY,
-    holder_txn  VARCHAR(50) NOT NULL,
-    holder_ts   INT NOT NULL,          -- Unix timestamp for Wound-Wait comparison
-    lock_time   DATETIME NOT NULL      -- When lock was acquired
+    seat_id VARCHAR(20) PRIMARY KEY,
+    holder_txn VARCHAR(50) NOT NULL,
+    holder_ts INT NOT NULL,
+    lock_time DATETIME NOT NULL
 );
 ```
 
-The `holder_ts` column is the key — it's what the Wound-Wait algorithm compares to determine which transaction is "older."
+`holder_ts` is the key field used by Wound-Wait to compare transaction age.
 
 ---
 
-## 👨‍💻 Author
+# 👨‍💻 Author
 
 <div align="center">
 
-**Arun Chandrasekar**
+## Arun Chandrasekar
+
+AI Engineer • Backend Engineer  
 Integrated M.Tech Software Engineering — VIT Vellore
 
 [![Portfolio](https://img.shields.io/badge/Portfolio-arunc.vercel.app-black?style=for-the-badge&logo=vercel)](https://arunc.vercel.app)
-[![GitHub](https://img.shields.io/badge/GitHub-ArunChandrasekar07-181717?style=for-the-badge&logo=github)](https://github.com/arunchandrasekar07)
+[![GitHub](https://img.shields.io/badge/GitHub-ArunChandrasekar07-181717?style=for-the-badge&logo=github)](https://github.com/ArunChandrasekar07)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-arunchandrasekar1-0A66C2?style=for-the-badge&logo=linkedin)](https://linkedin.com/in/arunchandrasekar1)
 
-*Built to demonstrate production-grade concurrency theory — not just textbook pseudocode.*
+*Built to demonstrate production-grade concurrency theory — beyond textbook pseudocode.*
 
 </div>
