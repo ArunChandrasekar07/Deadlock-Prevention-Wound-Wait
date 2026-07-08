@@ -10,7 +10,6 @@ if (!is_array($seats) || count($seats) === 0) {
   exit;
 }
 
-// Transaction identity + timestamp
 session_start();
 if (!isset($_SESSION["txn_id"])) {
   $_SESSION["txn_id"] = bin2hex(random_bytes(6));
@@ -35,3 +34,4 @@ if (count($failed) > 0) {
 }
 
 header("Location: payment.php?train_no=".urlencode($train_no)."&seats=".urlencode(implode(',', $locked)));
+exit;
