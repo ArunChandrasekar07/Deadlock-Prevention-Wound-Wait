@@ -1,16 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Railway Booking | Concurrency Demo</title>
-  <link rel="stylesheet" href="./styles/index.css">
-  <link rel="icon" href="./assets/indian_railways_logo.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Railway Booking | Concurrency Demo</title>
+<link rel="icon" href="./assets/indian_railways_logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0B1220;
+    --panel:#121C2E;
+    --paper:#ECE7D8;
+    --paper-dim:#A7A492;
+    --amber:#E8A33D;
+    --green:#3CA070;
+    --red:#C0392B;
+    --line:rgba(236,231,216,0.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'IBM Plex Sans',sans-serif;
+    line-height:1.6;
+  }
+  a{color:inherit;text-decoration:none}
+  .nav{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:20px 40px;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand img{width:32px;height:32px;border-radius:4px}
+  .brand span{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;letter-spacing:0.12em;text-transform:uppercase;
+    color:var(--paper-dim);
+  }
+  .links{display:flex;gap:32px}
+  .links a{
+    font-size:14px;color:var(--paper-dim);
+    transition:color .15s ease;
+  }
+  .links a:hover,.links a:focus-visible{color:var(--amber)}
+
+  .hero{
+    max-width:1120px;margin:0 auto;
+    padding:88px 40px 100px;
+    display:grid;grid-template-columns:1.2fr 1fr;gap:64px;
+    align-items:center;
+  }
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;letter-spacing:0.1em;text-transform:uppercase;
+    color:var(--amber);
+    border:1px solid rgba(232,163,61,0.35);
+    padding:6px 12px;border-radius:3px;
+    margin-bottom:28px;
+  }
+  .eyebrow::before{
+    content:'';width:6px;height:6px;border-radius:50%;
+    background:var(--amber);
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(2.4rem,4.2vw,3.4rem);
+    line-height:1.08;
+    letter-spacing:-0.01em;
+    color:var(--paper);
+    margin-bottom:22px;
+  }
+  .lede{
+    font-size:16px;color:var(--paper-dim);max-width:46ch;
+    margin-bottom:36px;
+  }
+  .cta{display:flex;gap:14px;margin-bottom:28px}
+  .btn{
+    padding:13px 24px;border-radius:3px;
+    font-size:14px;font-weight:500;
+    border:1px solid transparent;
+    transition:transform .15s ease, background .15s ease;
+    display:inline-block;
+  }
+  .btn:active{transform:scale(0.98)}
+  .btn.solid{background:var(--amber);color:#3A2408}
+  .btn.solid:hover{background:#F0B558}
+  .btn.outline{border-color:rgba(236,231,216,0.28);color:var(--paper)}
+  .btn.outline:hover{border-color:var(--paper);background:rgba(236,231,216,0.05)}
+  .meta{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;color:var(--paper-dim);
+    padding-top:20px;border-top:1px solid var(--line);
+    display:flex;align-items:center;gap:8px;
+  }
+
+  .signal{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:28px;
+  }
+  .signal-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;letter-spacing:0.1em;text-transform:uppercase;
+    color:var(--paper-dim);margin-bottom:20px;
+  }
+  .gantry{display:flex;justify-content:space-around;margin-bottom:24px}
+  .post{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .lamp{
+    width:22px;height:22px;border-radius:50%;
+    background:rgba(236,231,216,0.08);
+    box-shadow:inset 0 0 0 1px rgba(236,231,216,0.15);
+  }
+  .lamp.lit-red{background:var(--red);box-shadow:0 0 14px 2px rgba(192,57,43,0.55)}
+  .lamp.lit-amber{background:var(--amber);box-shadow:0 0 14px 2px rgba(232,163,61,0.55)}
+  .lamp.lit-green{background:var(--green);box-shadow:0 0 14px 2px rgba(60,160,112,0.55)}
+  .post-label{
+    font-family:'IBM Plex Mono',monospace;font-size:10px;
+    color:var(--paper-dim);letter-spacing:0.04em;
+  }
+  .post.active .post-label{color:var(--paper)}
+  .readout{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;
+    color:var(--paper-dim);
+    border-top:1px solid var(--line);padding-top:16px;
+    display:flex;justify-content:space-between;
+  }
+  .readout b{color:var(--amber);font-weight:500}
+
+  .strip{
+    max-width:1120px;margin:0 auto;padding:0 40px 100px;
+    display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+    background:var(--line);border-radius:8px;overflow:hidden;
+  }
+  .card{background:var(--panel);padding:32px}
+  .card .dot{width:9px;height:9px;border-radius:50%;margin-bottom:16px}
+  .card.wound .dot{background:var(--red)}
+  .card.wait .dot{background:var(--amber)}
+  .card.clear .dot{background:var(--green)}
+  .card h3{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;letter-spacing:0.06em;text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  .card p{font-size:14px;color:var(--paper-dim)}
+
+  footer{
+    border-top:1px solid var(--line);
+    padding:28px 40px;text-align:center;
+  }
+  footer p{font-size:13px;color:var(--paper-dim)}
+
+  @media (max-width:860px){
+    .hero{grid-template-columns:1fr;padding:56px 24px 72px}
+    .strip{grid-template-columns:1fr;padding:0 24px 72px}
+    .nav{padding:16px 24px}
+    .links{gap:20px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+  }
+  a:focus-visible,button:focus-visible{
+    outline:2px solid var(--amber);outline-offset:2px;
+  }
+</style>
 </head>
 <body>
+
   <header class="nav">
     <div class="brand">
-      <img src="./assets/indian_railways_logo.png" alt="Logo" width="44" height="44">
+      <img src="./assets/indian_railways_logo.png" alt="Railway booking logo">
       <span>Railway Booking</span>
     </div>
     <nav class="links">
@@ -21,24 +184,63 @@
   </header>
 
   <main class="hero">
-    <section class="hero-text">
-      <h1>Concurrent Ticket Booking</h1>
-      <p>Seat locking under concurrent requests with timestamp ordering (wound–wait) and timeout-based preemption.</p>
+    <section>
+      <div class="eyebrow">Platform 01 — live demo</div>
+      <h1>Concurrent ticket booking, without the collisions.</h1>
+      <p class="lede">Every seat lock resolves through timestamp ordering — wound&ndash;wait — so two passengers can never hold the same block section at once. Older requests wound younger ones; younger requests wait their turn.</p>
       <div class="cta">
-        <a class="btn" href="./frontend/register.html">Create Account</a>
+        <a class="btn solid" href="./frontend/register.html">Create account</a>
         <a class="btn outline" href="./frontend/login.html">Login</a>
       </div>
       <div class="meta">
-        <span>IRIS-ready repo: reproducible demo + results</span>
+        <span>Reproducible demo — full lock trace in repo</span>
       </div>
     </section>
-    <section class="hero-image">
-      <img src="./assets/Vande-Bharat-Sleeper-Coach.jpg" alt="Train">
-    </section>
+
+    <aside class="signal">
+      <div class="signal-label">Block section status</div>
+      <div class="gantry">
+        <div class="post">
+          <div class="lamp lit-red"></div>
+          <div class="post-label">wound</div>
+        </div>
+        <div class="post active">
+          <div class="lamp lit-amber"></div>
+          <div class="post-label">wait</div>
+        </div>
+        <div class="post">
+          <div class="lamp lit-green"></div>
+          <div class="post-label">granted</div>
+        </div>
+      </div>
+      <div class="readout">
+        <span>txn_ts compare</span>
+        <b>request &lt; holder</b>
+      </div>
+    </aside>
   </main>
 
-  <footer class="footer">
-    <p>© 2025 — Concurrency & Deadlock Prevention Demo</p>
+  <section class="strip">
+    <div class="card wound">
+      <div class="dot"></div>
+      <h3>Wound</h3>
+      <p>An older transaction reclaims the seat from a younger one holding it — the younger request is aborted and must retry.</p>
+    </div>
+    <div class="card wait">
+      <div class="dot"></div>
+      <h3>Wait</h3>
+      <p>A younger transaction requesting a seat held by an older one queues instead of forcing it out — no younger transaction ever preempts an older holder.</p>
+    </div>
+    <div class="card clear">
+      <div class="dot"></div>
+      <h3>Granted</h3>
+      <p>No conflicting hold exists. The lock is issued immediately and the seat moves to the passenger's transaction.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 — Concurrency &amp; deadlock prevention demo</p>
   </footer>
+
 </body>
 </html>
