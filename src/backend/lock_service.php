@@ -2,7 +2,6 @@
 require_once __DIR__ . "/wound_wait.php";
 
 function acquire_seat_lock($conn, $seat_id, $txn_id, $txn_ts) {
-    // Lock the row (or absence of it) to prevent races
     $result = pg_query_params(
         $conn,
         "SELECT holder_txn, holder_ts, lock_time FROM seat_locks WHERE seat_id = $1 FOR UPDATE",
