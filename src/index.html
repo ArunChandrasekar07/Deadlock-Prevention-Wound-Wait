@@ -4,176 +4,369 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Railway Booking | Concurrency Demo</title>
-<link rel="icon" href="./assets/indian_railways_logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#0B1220;
-    --panel:#121C2E;
-    --paper:#ECE7D8;
-    --paper-dim:#A7A492;
-    --amber:#E8A33D;
-    --green:#3CA070;
-    --red:#C0392B;
-    --line:rgba(236,231,216,0.12);
+    --bg:#0A0E16;
+    --panel:#12192A;
+    --panel-2:#1A2334;
+    --line:#26314A;
+    --track:#3A4558;
+    --text:#EDEFF5;
+    --text-dim:#8D97AE;
+    --amber:#F2B84B;
+    --red:#E5484D;
+    --green:#35D07F;
+    --orange:#FFD23F;
   }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    background:var(--ink);
-    color:var(--paper);
-    font-family:'IBM Plex Sans',sans-serif;
-    line-height:1.6;
-  }
-  a{color:inherit;text-decoration:none}
-  .nav{
-    display:flex;justify-content:space-between;align-items:center;
-    padding:20px 40px;
-    border-bottom:1px solid var(--line);
-  }
-  .brand{display:flex;align-items:center;gap:12px}
-  .brand img{width:32px;height:32px;border-radius:4px}
-  .brand span{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:13px;letter-spacing:0.12em;text-transform:uppercase;
-    color:var(--paper-dim);
-  }
-  .links{display:flex;gap:32px}
-  .links a{
-    font-size:14px;color:var(--paper-dim);
-    transition:color .15s ease;
-  }
-  .links a:hover,.links a:focus-visible{color:var(--amber)}
 
-  .hero{
-    max-width:1120px;margin:0 auto;
-    padding:88px 40px 100px;
-    display:grid;grid-template-columns:1.2fr 1fr;gap:64px;
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  html{scroll-behavior:smooth;}
+
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  /* faint sleeper/track watermark across the whole page */
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+    background-image:
+      repeating-linear-gradient(90deg, rgba(58,69,88,0.35) 0 8px, transparent 8px 46px),
+      linear-gradient(180deg, rgba(255,210,63,0) 0%, rgba(255,210,63,0.02) 100%);
+    background-position:0 78%;
+    background-size:100% 4px, 100% 100%;
+    opacity:0.5;
+  }
+
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  /* ---------- NAV ---------- */
+  .nav{
+    position:relative;
+    z-index:2;
+    display:flex;
     align-items:center;
+    justify-content:space-between;
+    padding:22px 6vw;
+    border-bottom:1px solid var(--line);
+    backdrop-filter:blur(6px);
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-family:'Bebas Neue',sans-serif;
+    font-size:1.5rem;
+    letter-spacing:0.06em;
+  }
+  .brand-mark{
+    width:40px;height:40px;
+    border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(145deg,var(--panel-2),var(--panel));
+    border:1px solid var(--line);
+  }
+  .links{display:flex;gap:2.2rem;}
+  .links a{
+    color:var(--text-dim);
+    text-decoration:none;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.01em;
+    transition:color 0.2s ease;
+    position:relative;
+  }
+  .links a::after{
+    content:"";
+    position:absolute;left:0;bottom:-6px;
+    width:0;height:2px;
+    background:var(--orange);
+    transition:width 0.25s ease;
+  }
+  .links a:hover{color:var(--text);}
+  .links a:hover::after{width:100%;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative;
+    z-index:2;
+    display:grid;
+    grid-template-columns:1.05fr 0.95fr;
+    gap:3vw;
+    align-items:center;
+    padding:7vw 6vw 5vw;
+    max-width:1400px;
+    margin:0 auto;
   }
   .eyebrow{
-    display:inline-flex;align-items:center;gap:8px;
-    font-family:'IBM Plex Mono',monospace;
-    font-size:12px;letter-spacing:0.1em;text-transform:uppercase;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.72rem;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
     color:var(--amber);
-    border:1px solid rgba(232,163,61,0.35);
-    padding:6px 12px;border-radius:3px;
-    margin-bottom:28px;
-  }
-  .eyebrow::before{
-    content:'';width:6px;height:6px;border-radius:50%;
-    background:var(--amber);
-  }
-  h1{
-    font-family:'Fraunces',serif;
-    font-weight:600;
-    font-size:clamp(2.4rem,4.2vw,3.4rem);
-    line-height:1.08;
-    letter-spacing:-0.01em;
-    color:var(--paper);
+    background:rgba(242,184,75,0.08);
+    border:1px solid rgba(242,184,75,0.25);
+    padding:6px 12px;
+    border-radius:999px;
     margin-bottom:22px;
   }
-  .lede{
-    font-size:16px;color:var(--paper-dim);max-width:46ch;
-    margin-bottom:36px;
+  .eyebrow-dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--green);
+    box-shadow:0 0 8px var(--green);
+    animation:pulse 1.8s ease-in-out infinite;
   }
-  .cta{display:flex;gap:14px;margin-bottom:28px}
+  @keyframes pulse{
+    0%,100%{opacity:1;}
+    50%{opacity:0.35;}
+  }
+
+  h1{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(2.8rem,6vw,5rem);
+    line-height:0.98;
+    letter-spacing:0.01em;
+    color:var(--text);
+    margin-bottom:22px;
+  }
+  h1 span{color:var(--orange);}
+
+  .hero-text p{
+    color:var(--text-dim);
+    font-size:1.08rem;
+    line-height:1.65;
+    max-width:46ch;
+    margin-bottom:34px;
+  }
+  .hero-text p b{color:var(--text);font-weight:600;}
+
+  .cta{display:flex;gap:14px;margin-bottom:30px;}
   .btn{
-    padding:13px 24px;border-radius:3px;
-    font-size:14px;font-weight:500;
-    border:1px solid transparent;
-    transition:transform .15s ease, background .15s ease;
-    display:inline-block;
-  }
-  .btn:active{transform:scale(0.98)}
-  .btn.solid{background:var(--amber);color:#3A2408}
-  .btn.solid:hover{background:#F0B558}
-  .btn.outline{border-color:rgba(236,231,216,0.28);color:var(--paper)}
-  .btn.outline:hover{border-color:var(--paper);background:rgba(236,231,216,0.05)}
-  .meta{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:12px;color:var(--paper-dim);
-    padding-top:20px;border-top:1px solid var(--line);
-    display:flex;align-items:center;gap:8px;
-  }
-
-  .signal{
-    background:var(--panel);
-    border:1px solid var(--line);
+    font-weight:600;
+    font-size:0.95rem;
+    padding:14px 26px;
     border-radius:8px;
-    padding:28px;
+    text-decoration:none;
+    transition:transform 0.2s ease, box-shadow 0.2s ease;
   }
-  .signal-label{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:11px;letter-spacing:0.1em;text-transform:uppercase;
-    color:var(--paper-dim);margin-bottom:20px;
+  .btn:not(.outline){
+    background:var(--orange);
+    color:#161116;
+    box-shadow:0 8px 24px -8px rgba(255,210,63,0.55);
   }
-  .gantry{display:flex;justify-content:space-around;margin-bottom:24px}
-  .post{display:flex;flex-direction:column;align-items:center;gap:10px}
-  .lamp{
-    width:22px;height:22px;border-radius:50%;
-    background:rgba(236,231,216,0.08);
-    box-shadow:inset 0 0 0 1px rgba(236,231,216,0.15);
+  .btn:not(.outline):hover{transform:translateY(-2px);box-shadow:0 12px 30px -8px rgba(255,210,63,0.7);}
+  .btn.outline{
+    border:1px solid var(--line);
+    color:var(--text);
+    background:rgba(255,255,255,0.02);
   }
-  .lamp.lit-red{background:var(--red);box-shadow:0 0 14px 2px rgba(192,57,43,0.55)}
-  .lamp.lit-amber{background:var(--amber);box-shadow:0 0 14px 2px rgba(232,163,61,0.55)}
-  .lamp.lit-green{background:var(--green);box-shadow:0 0 14px 2px rgba(60,160,112,0.55)}
-  .post-label{
-    font-family:'IBM Plex Mono',monospace;font-size:10px;
-    color:var(--paper-dim);letter-spacing:0.04em;
-  }
-  .post.active .post-label{color:var(--paper)}
-  .readout{
-    font-family:'IBM Plex Mono',monospace;font-size:12px;
-    color:var(--paper-dim);
-    border-top:1px solid var(--line);padding-top:16px;
-    display:flex;justify-content:space-between;
-  }
-  .readout b{color:var(--amber);font-weight:500}
+  .btn.outline:hover{border-color:var(--orange);color:var(--orange);transform:translateY(-2px);}
 
-  .strip{
-    max-width:1120px;margin:0 auto;padding:0 40px 100px;
-    display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
-    background:var(--line);border-radius:8px;overflow:hidden;
+  .meta{
+    display:flex;align-items:center;gap:10px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.8rem;
+    color:var(--text-dim);
   }
-  .card{background:var(--panel);padding:32px}
-  .card .dot{width:9px;height:9px;border-radius:50%;margin-bottom:16px}
-  .card.wound .dot{background:var(--red)}
-  .card.wait .dot{background:var(--amber)}
-  .card.clear .dot{background:var(--green)}
-  .card h3{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:13px;letter-spacing:0.06em;text-transform:uppercase;
+  .meta::before{
+    content:"";
+    width:18px;height:1px;
+    background:var(--track);
+  }
+
+  /* ---------- SIGNATURE: signal track ---------- */
+  .hero-image{
+    position:relative;
+    background:radial-gradient(circle at 30% 20%, rgba(255,210,63,0.07), transparent 60%),var(--panel);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:34px 28px 44px;
+    min-height:420px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+  }
+  .signal-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.72rem;
+    color:var(--text-dim);
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  .signal-head .state{
+    text-align:right;
+  }
+  .signal-head .state b{
+    display:block;
+    color:var(--amber);
+    font-size:0.85rem;
+    letter-spacing:0.02em;
+  }
+
+  .track-svg{width:100%;height:auto;display:block;}
+
+  .legend{
+    display:flex;
+    gap:22px;
+    justify-content:center;
+    margin-top:18px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.72rem;
+    color:var(--text-dim);
+  }
+  .legend span{display:flex;align-items:center;gap:7px;}
+  .legend i{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .i-red{background:var(--red);box-shadow:0 0 6px var(--red);}
+  .i-amber{background:var(--amber);box-shadow:0 0 6px var(--amber);}
+  .i-green{background:var(--green);box-shadow:0 0 6px var(--green);}
+
+  /* signal lamp animation - cycles red -> amber -> green like lock states */
+  .lamp{animation:lampCycle 4.5s ease-in-out infinite;}
+  .lamp-1{animation-delay:0s;}
+  .lamp-2{animation-delay:1.5s;}
+  .lamp-3{animation-delay:3s;}
+  @keyframes lampCycle{
+    0%,8%{fill:var(--red);filter:drop-shadow(0 0 5px var(--red));}
+    33%,41%{fill:var(--amber);filter:drop-shadow(0 0 5px var(--amber));}
+    66%,74%{fill:var(--green);filter:drop-shadow(0 0 6px var(--green));}
+    100%{fill:var(--red);filter:drop-shadow(0 0 5px var(--red));}
+  }
+
+  .train-group{animation:travel 6s linear infinite;}
+  @keyframes travel{
+    0%{transform:translateX(-40px);}
+    100%{transform:translateX(420px);}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .lamp,.train-group,.eyebrow-dot{animation:none !important;}
+  }
+
+  /* ---------- MILE MARKERS (algorithm sequence) ---------- */
+  .route{
+    position:relative;
+    z-index:2;
+    max-width:1400px;
+    margin:0 auto;
+    padding:2vw 6vw 7vw;
+  }
+  .route-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    border-bottom:1px solid var(--line);
+    padding-bottom:18px;
+    margin-bottom:6px;
+  }
+  .route-head h2{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:2.1rem;
+    letter-spacing:0.02em;
+  }
+  .route-head span{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.78rem;
+    color:var(--text-dim);
+  }
+
+  .miles{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:0;
+    margin-top:10px;
+  }
+  .mile{
+    padding:26px 20px 26px 0;
+    border-right:1px solid var(--line);
+    position:relative;
+  }
+  .mile:last-child{border-right:none;}
+  .mile-num{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.78rem;
+    color:var(--orange);
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .mile h3{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:1.4rem;
+    letter-spacing:0.01em;
     margin-bottom:10px;
   }
-  .card p{font-size:14px;color:var(--paper-dim)}
+  .mile p{
+    color:var(--text-dim);
+    font-size:0.92rem;
+    line-height:1.55;
+  }
+  .mile::before{
+    content:"";
+    position:absolute;
+    top:0;left:-1px;
+    width:7px;height:7px;
+    border-radius:50%;
+    background:var(--track);
+    transform:translateY(-50%);
+  }
+  .mile:first-child::before{left:0;}
 
-  footer{
+  @media (max-width:920px){
+    .hero{grid-template-columns:1fr;}
+    .miles{grid-template-columns:1fr 1fr;}
+    .mile{border-right:none;border-bottom:1px solid var(--line);padding:22px 0;}
+  }
+  @media (max-width:560px){
+    .miles{grid-template-columns:1fr;}
+    .links{gap:1.2rem;}
+  }
+
+  /* ---------- FOOTER ---------- */
+  .footer{
+    position:relative;z-index:2;
     border-top:1px solid var(--line);
-    padding:28px 40px;text-align:center;
+    padding:26px 6vw;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.78rem;
+    color:var(--text-dim);
   }
-  footer p{font-size:13px;color:var(--paper-dim)}
-
-  @media (max-width:860px){
-    .hero{grid-template-columns:1fr;padding:56px 24px 72px}
-    .strip{grid-template-columns:1fr;padding:0 24px 72px}
-    .nav{padding:16px 24px}
-    .links{gap:20px}
-  }
-  @media (prefers-reduced-motion:reduce){
-    *{animation:none!important;transition:none!important}
-  }
-  a:focus-visible,button:focus-visible{
-    outline:2px solid var(--amber);outline-offset:2px;
-  }
+  .footer .dot-red{color:var(--red);}
 </style>
 </head>
 <body>
 
   <header class="nav">
     <div class="brand">
-      <img src="./assets/indian_railways_logo.png" alt="Railway booking logo">
+      <div class="brand-mark">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="6" width="18" height="11" rx="2" fill="#FFD23F"/>
+          <circle cx="7.5" cy="19" r="2" fill="#EDEFF5"/>
+          <circle cx="16.5" cy="19" r="2" fill="#EDEFF5"/>
+          <rect x="6" y="8.5" width="4" height="4" rx="0.6" fill="#0A0E16"/>
+          <rect x="14" y="8.5" width="4" height="4" rx="0.6" fill="#0A0E16"/>
+        </svg>
+      </div>
       <span>Railway Booking</span>
     </div>
     <nav class="links">
@@ -184,62 +377,114 @@
   </header>
 
   <main class="hero">
-    <section>
-      <div class="eyebrow">Platform 01 — live demo</div>
-      <h1>Concurrent ticket booking, without the collisions.</h1>
-      <p class="lede">Every seat lock resolves through timestamp ordering — wound&ndash;wait — so two passengers can never hold the same block section at once. Older requests wound younger ones; younger requests wait their turn.</p>
+    <section class="hero-text">
+      <div class="eyebrow"><span class="eyebrow-dot"></span>Deadlock-free · Wound&#8211;Wait</div>
+      <h1>Concurrent Ticket <span>Booking</span></h1>
+      <p>Seat locking under concurrent requests, resolved with <b>timestamp ordering</b> (wound&#8211;wait) and <b>timeout-based preemption</b> — no deadlocks, no double-booked berths.</p>
       <div class="cta">
-        <a class="btn solid" href="./frontend/register.html">Create account</a>
+        <a class="btn" href="./frontend/register.html">Create Account</a>
         <a class="btn outline" href="./frontend/login.html">Login</a>
       </div>
-      <div class="meta">
-        <span>Reproducible demo — full lock trace in repo</span>
-      </div>
+      <div class="meta mono">IRIS-ready repo: reproducible demo + results</div>
     </section>
 
-    <aside class="signal">
-      <div class="signal-label">Block section status</div>
-      <div class="gantry">
-        <div class="post">
-          <div class="lamp lit-red"></div>
-          <div class="post-label">wound</div>
-        </div>
-        <div class="post active">
-          <div class="lamp lit-amber"></div>
-          <div class="post-label">wait</div>
-        </div>
-        <div class="post">
-          <div class="lamp lit-green"></div>
-          <div class="post-label">granted</div>
-        </div>
+    <section class="hero-image">
+      <div class="signal-head">
+        <span>Block Signal<br>Simulation</span>
+        <span class="state">Lock state<b>Wound &rarr; Wait &rarr; Commit</b></span>
       </div>
-      <div class="readout">
-        <span>txn_ts compare</span>
-        <b>request &lt; holder</b>
+
+      <svg class="track-svg" viewBox="0 0 460 170" xmlns="http://www.w3.org/2000/svg">
+        <!-- rail -->
+        <line x1="10" y1="130" x2="450" y2="130" stroke="#3A4558" stroke-width="3"/>
+        <line x1="10" y1="140" x2="450" y2="140" stroke="#26314A" stroke-width="2"/>
+        <!-- sleepers -->
+        <g stroke="#26314A" stroke-width="4">
+          <line x1="20" y1="122" x2="20" y2="148"/>
+          <line x1="55" y1="122" x2="55" y2="148"/>
+          <line x1="90" y1="122" x2="90" y2="148"/>
+          <line x1="125" y1="122" x2="125" y2="148"/>
+          <line x1="160" y1="122" x2="160" y2="148"/>
+          <line x1="195" y1="122" x2="195" y2="148"/>
+          <line x1="230" y1="122" x2="230" y2="148"/>
+          <line x1="265" y1="122" x2="265" y2="148"/>
+          <line x1="300" y1="122" x2="300" y2="148"/>
+          <line x1="335" y1="122" x2="335" y2="148"/>
+          <line x1="370" y1="122" x2="370" y2="148"/>
+          <line x1="405" y1="122" x2="405" y2="148"/>
+          <line x1="440" y1="122" x2="440" y2="148"/>
+        </g>
+
+        <!-- signal posts with lamps cycling through lock states -->
+        <g>
+          <line x1="80" y1="60" x2="80" y2="122" stroke="#3A4558" stroke-width="3"/>
+          <rect x="68" y="34" width="24" height="30" rx="4" fill="#12192A" stroke="#26314A"/>
+          <circle class="lamp lamp-1" cx="80" cy="49" r="6" fill="#E5484D"/>
+        </g>
+        <g>
+          <line x1="230" y1="46" x2="230" y2="122" stroke="#3A4558" stroke-width="3"/>
+          <rect x="218" y="20" width="24" height="30" rx="4" fill="#12192A" stroke="#26314A"/>
+          <circle class="lamp lamp-2" cx="230" cy="35" r="6" fill="#E5484D"/>
+        </g>
+        <g>
+          <line x1="380" y1="60" x2="380" y2="122" stroke="#3A4558" stroke-width="3"/>
+          <rect x="368" y="34" width="24" height="30" rx="4" fill="#12192A" stroke="#26314A"/>
+          <circle class="lamp lamp-3" cx="380" cy="49" r="6" fill="#E5484D"/>
+        </g>
+
+        <!-- moving train silhouette -->
+        <g class="train-group">
+          <rect x="0" y="98" width="70" height="26" rx="6" fill="#FFD23F"/>
+          <rect x="6" y="104" width="14" height="10" rx="1.5" fill="#0A0E16"/>
+          <rect x="24" y="104" width="14" height="10" rx="1.5" fill="#0A0E16"/>
+          <rect x="42" y="104" width="14" height="10" rx="1.5" fill="#0A0E16"/>
+          <circle cx="14" cy="126" r="6" fill="#12192A" stroke="#3A4558" stroke-width="2"/>
+          <circle cx="56" cy="126" r="6" fill="#12192A" stroke="#3A4558" stroke-width="2"/>
+          <rect x="-26" y="102" width="24" height="20" rx="5" fill="#EDEFF5" opacity="0.9"/>
+          <circle cx="-14" cy="124" r="5" fill="#12192A" stroke="#3A4558" stroke-width="2"/>
+        </g>
+      </svg>
+
+      <div class="legend">
+        <span><i class="i-red"></i>Wound</span>
+        <span><i class="i-amber"></i>Wait</span>
+        <span><i class="i-green"></i>Commit</span>
       </div>
-    </aside>
+    </section>
   </main>
 
-  <section class="strip">
-    <div class="card wound">
-      <div class="dot"></div>
-      <h3>Wound</h3>
-      <p>An older transaction reclaims the seat from a younger one holding it — the younger request is aborted and must retry.</p>
+  <section class="route">
+    <div class="route-head">
+      <h2>The Line</h2>
+      <span class="mono">4 stops from request to ticket</span>
     </div>
-    <div class="card wait">
-      <div class="dot"></div>
-      <h3>Wait</h3>
-      <p>A younger transaction requesting a seat held by an older one queues instead of forcing it out — no younger transaction ever preempts an older holder.</p>
-    </div>
-    <div class="card clear">
-      <div class="dot"></div>
-      <h3>Granted</h3>
-      <p>No conflicting hold exists. The lock is issued immediately and the seat moves to the passenger's transaction.</p>
+    <div class="miles">
+      <div class="mile">
+        <span class="mile-num">MILE 01</span>
+        <h3>Request Arrives</h3>
+        <p>A booking transaction is stamped with its start timestamp the moment it hits the seat lock manager.</p>
+      </div>
+      <div class="mile">
+        <span class="mile-num">MILE 02</span>
+        <h3>Wound</h3>
+        <p>If the requester is older than the lock holder, the holder is preempted and rolled back — the older transaction always proceeds.</p>
+      </div>
+      <div class="mile">
+        <span class="mile-num">MILE 03</span>
+        <h3>Wait</h3>
+        <p>If the requester is younger, it queues instead of rolling back anyone — no wasted work, no circular wait.</p>
+      </div>
+      <div class="mile">
+        <span class="mile-num">MILE 04</span>
+        <h3>Commit</h3>
+        <p>The seat lock is granted, the berth is confirmed, and the ticket is issued — deadlock-free by construction.</p>
+      </div>
     </div>
   </section>
 
-  <footer>
-    <p>&copy; 2025 — Concurrency &amp; deadlock prevention demo</p>
+  <footer class="footer">
+    <span>&copy; 2025 &mdash; Concurrency &amp; Deadlock Prevention Demo</span>
+    <span><span class="dot-red">&#9679;</span> No image assets required</span>
   </footer>
 
 </body>
