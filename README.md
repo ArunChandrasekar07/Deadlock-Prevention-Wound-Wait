@@ -21,7 +21,7 @@ Built from scratch — applying **Operating Systems concurrency theory** to a re
 <img src="https://img.shields.io/badge/🚀%20Live%20Demo-DEADLOCK-6366F1?style=for-the-badge"/>
 </a>
 
-<a href="https://github.com/ArunChandrasekar07/https://deadlock-prevention-wound-wait.onrender.com/">
+<a href="https://github.com/ArunChandrasekar07/Deadlock-Prevention-Wound-Wait">
 <img src="https://img.shields.io/badge/⭐%20Star%20on%20GitHub-black?style=for-the-badge"/>
 </a>
 
