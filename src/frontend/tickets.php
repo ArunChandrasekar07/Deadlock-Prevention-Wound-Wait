@@ -1,6 +1,50 @@
 <?php
-$train_no = $_GET["train_no"] ?? "00000";
-$seats = $_GET["seats"] ?? "";
+require_once __DIR__ . "/../backend/db.php";
+require_once __DIR__ . "/../backend/session_guard.php";
+
+require_login();
+
+$train_no    = $_GET["train_no"] ?? "00000";
+$seats_param = $_GET["seats"] ?? "";
+$seat_list   = array_values(array_filter(array_map('trim', explode(',', $seats_param))));
+$username    = current_username();
+
+$conn = db_connect();
+pg_query($conn, "BEGIN");
+
+// Re-verify this user still actually holds every lock before
+// finalizing. Without this, a seat could get wounded by someone
+// else in the seconds between the payment page loading and the
+// user clicking through — and this page would still hand out a
+// ticket for a seat that's no longer theirs.
+$still_held = true;
+foreach ($seat_list as $seat) {
+    $seat_id = $train_no . "-" . $seat;
+    $check = pg_query_params($conn, "SELECT holder_txn FROM seat_locks WHERE seat_id = $1 FOR UPDATE", [$seat_id]);
+    $row = $check ? pg_fetch_assoc($check) : null;
+    if (!$row || $row["holder_txn"] !== $username) {
+        $still_held = false;
+        break;
+    }
+}
+
+if (!$still_held || count($seat_list) === 0) {
+    pg_query($conn, "ROLLBACK");
+    echo "<script>alert('Your seat hold expired before payment finished. Please select seats again.'); window.location.href='train.php';</script>";
+    exit;
+}
+
+// Move from temporary lock -> permanent booking, atomically.
+pg_query_params(
+    $conn,
+    "INSERT INTO bookings(train_no, seats, username, status) VALUES ($1, $2, $3, 'booked')",
+    [$train_no, implode(',', $seat_list), $username]
+);
+foreach ($seat_list as $seat) {
+    pg_query_params($conn, "DELETE FROM seat_locks WHERE seat_id = $1", [$train_no . "-" . $seat]);
+}
+
+pg_query($conn, "COMMIT");
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -57,12 +101,7 @@ $seats = $_GET["seats"] ?? "";
     .ticket-top h2{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:0.01em;margin-bottom:4px;}
     .ticket-top p{color:var(--text-dim);font-size:0.85rem;}
 
-    .perforation{
-      position:relative;
-      height:1px;
-      border-top:1px dashed var(--track);
-      margin:0 0;
-    }
+    .perforation{position:relative;height:1px;border-top:1px dashed var(--track);}
     .perforation::before,.perforation::after{
       content:"";position:absolute;top:-11px;width:22px;height:22px;background:var(--bg);border-radius:50%;
     }
@@ -118,7 +157,7 @@ $seats = $_GET["seats"] ?? "";
     <nav class="links">
       <a href="../index.html">Home</a>
       <a href="train.php">demo</a>
-      <a href="login.html">Logout</a>
+      <a href="logout.php">Logout</a>
     </nav>
   </header>
 
@@ -132,8 +171,9 @@ $seats = $_GET["seats"] ?? "";
       <div class="perforation"></div>
       <div class="ticket-body">
         <table>
+          <tr><th>Passenger</th><td><?=htmlspecialchars($username)?></td></tr>
           <tr><th>Train No</th><td class="mono"><?=htmlspecialchars($train_no)?></td></tr>
-          <tr><th>Seats</th><td><?=htmlspecialchars($seats)?></td></tr>
+          <tr><th>Seats</th><td><?=htmlspecialchars(implode(', ', $seat_list))?></td></tr>
           <tr><th>Status</th><td class="status">Booked</td></tr>
         </table>
         <a class="btn" href="#" onclick="window.print(); return false;">Print</a>

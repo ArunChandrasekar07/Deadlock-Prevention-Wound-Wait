@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . "/../backend/session_guard.php";
+require_login();
+
 // Demo page: list trains
 $trains = [
   ["12345","Express Train A","Station A","08:00","02:30","10:30","Station B"],
@@ -111,7 +114,7 @@ $trains = [
     <nav class="links">
       <a href="../index.html">Home</a>
       <a href="train.php">Demo</a>
-      <a href="login.html">Logout</a>
+      <a href="logout.php">Logout</a>
     </nav>
   </header>
 

@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . "/../backend/session_guard.php";
+require_login();
+
 $train_no = $_GET["train_no"] ?? "00000";
 $seats = $_GET["seats"] ?? "";
 ?><!DOCTYPE html>
@@ -100,7 +103,7 @@ $seats = $_GET["seats"] ?? "";
     <nav class="links">
       <a href="../index.html">Home</a>
       <a href="train.php">demo</a>
-      <a href="login.html">Logout</a>
+      <a href="logout.php">Logout</a>
     </nav>
   </header>
 

@@ -1,7 +1,19 @@
 <?php
+require_once __DIR__ . "/../backend/db.php";
+require_once __DIR__ . "/../backend/lock_service.php";
+require_once __DIR__ . "/../backend/session_guard.php";
+
+require_login();
+
 $train_no = isset($_GET["train_no"]) ? $_GET["train_no"] : "00000";
 $seats = [];
 for($i=1;$i<=10;$i++) $seats[] = "B".$i;
+
+// NEW: this used to be missing entirely — every seat showed
+// "Available" for every user, always, regardless of what anyone
+// else had locked or booked.
+$conn = db_connect();
+$seat_status = seat_status_map($conn, $train_no, $seats);
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -78,6 +90,14 @@ for($i=1;$i<=10;$i++) $seats[] = "B".$i;
     .seat input:checked + label .status{color:var(--yellow);}
     .seat input:focus-visible + label{outline:2px solid var(--yellow);outline-offset:2px;}
 
+    /* NEW: unavailable states, since seats can now actually be
+       locked (by someone mid-checkout) or booked (permanently) */
+    .seat.taken label{
+      cursor:not-allowed;opacity:0.55;background:var(--panel-2);
+    }
+    .seat.taken label .status{color:var(--text-dim);}
+    .seat.taken.booked label .status{color:var(--red);}
+
     button{
       width:100%;padding:13px 14px;border:0;border-radius:9px;
       background:var(--yellow);color:#161116;font-weight:700;font-size:0.95rem;cursor:pointer;
@@ -108,7 +128,7 @@ for($i=1;$i<=10;$i++) $seats[] = "B".$i;
     <nav class="links">
       <a href="../index.html">Home</a>
       <a href="train.php">Back</a>
-      <a href="login.html">Logout</a>
+      <a href="logout.php">Logout</a>
     </nav>
   </header>
 
@@ -123,12 +143,16 @@ for($i=1;$i<=10;$i++) $seats[] = "B".$i;
       <form action="lock_selected_seats.php" method="POST">
         <input type="hidden" name="train_no" value="<?=htmlspecialchars($train_no)?>">
         <div class="seat-grid">
-          <?php foreach($seats as $s){ ?>
-          <div class="seat">
-            <input type="checkbox" id="seat-<?=htmlspecialchars($s)?>" name="seats[]" value="<?=htmlspecialchars($s)?>">
+          <?php foreach($seats as $s){
+            $st = $seat_status[$s];
+            $taken = $st !== "Available";
+            $bookedClass = $st === "Booked" ? " booked" : "";
+          ?>
+          <div class="seat<?= $taken ? " taken".$bookedClass : "" ?>">
+            <input type="checkbox" id="seat-<?=htmlspecialchars($s)?>" name="seats[]" value="<?=htmlspecialchars($s)?>" <?= $taken ? "disabled" : "" ?>>
             <label for="seat-<?=htmlspecialchars($s)?>">
               <span class="code"><?=htmlspecialchars($s)?></span>
-              <span class="status">Available</span>
+              <span class="status"><?=htmlspecialchars($st)?></span>
             </label>
           </div>
           <?php } ?>

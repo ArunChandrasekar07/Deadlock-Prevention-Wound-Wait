@@ -195,6 +195,19 @@
   }
   .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line);}
 
+  .banner{
+    display:none;
+    align-items:center;
+    gap:8px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.8rem;
+    padding:10px 14px;
+    border-radius:8px;
+    margin-bottom:16px;
+  }
+  .banner.show{display:flex;}
+  .banner.error{background:rgba(229,72,77,0.1);border:1px solid rgba(229,72,77,0.3);color:var(--red);}
+
   .link{
     text-align:center;
     font-size:0.88rem;
@@ -246,7 +259,9 @@
         <h1>Create your account</h1>
         <p class="sub">Register once to book seats and track your locks.</p>
 
-        <form action="login.html" method="GET">
+        <div id="banner" class="banner"></div>
+
+        <form action="register_action.php" method="POST">
           <div class="field">
             <label for="name">Name</label>
             <input type="text" id="name" name="name" placeholder="Full name" required>
@@ -279,6 +294,15 @@
       </div>
     </div>
   </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const banner = document.getElementById("banner");
+    if (params.get("error")) {
+      banner.textContent = params.get("error");
+      banner.className = "banner show error";
+    }
+  </script>
 
 </body>
 </html>
