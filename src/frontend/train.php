@@ -11,49 +11,138 @@ $trains = [
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Train Details</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-    body{margin:0;background:#fff}
-    header{background:#f39c12;padding:14px 22px;display:flex;justify-content:space-between;align-items:center}
-    header a{text-decoration:none;color:#111;font-weight:700;margin-left:14px}
-    h1{margin:24px 0 10px;text-align:center}
-    table{width:min(1100px,95%);margin:0 auto 24px;border-collapse:collapse}
-    th,td{border:1px solid #ddd;padding:10px;text-align:center}
-    th{background:#fafafa}
-    .btn{padding:8px 12px;border-radius:8px;background:#0b7285;color:#fff;text-decoration:none;font-weight:700;display:inline-block}
+    :root{
+      --bg:#0A0E16; --panel:#12192A; --panel-2:#1A2334; --line:#26314A; --track:#3A4558;
+      --text:#EDEFF5; --text-dim:#8D97AE; --amber:#F2B84B; --red:#E5484D; --green:#35D07F; --yellow:#FFD23F;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',system-ui,sans-serif;}
+    .mono{font-family:'JetBrains Mono',monospace;}
+    body{background:var(--bg);color:var(--text);position:relative;min-height:100vh;overflow-x:hidden;}
+    body::before{
+      content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+      background-image:repeating-linear-gradient(90deg, rgba(58,69,88,0.35) 0 8px, transparent 8px 46px);
+      background-position:0 78%;background-size:100% 4px;opacity:0.5;
+    }
+    header.nav{
+      position:relative;z-index:2;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:22px 6vw;border-bottom:1px solid var(--line);
+    }
+    .brand{display:flex;align-items:center;gap:12px;font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:0.06em;}
+    .brand-mark{
+      width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(145deg,var(--panel-2),var(--panel));border:1px solid var(--line);
+    }
+    nav.links{display:flex;gap:2rem;}
+    nav.links a{color:var(--text-dim);text-decoration:none;font-size:0.95rem;font-weight:500;position:relative;}
+    nav.links a::after{content:"";position:absolute;left:0;bottom:-6px;width:0;height:2px;background:var(--yellow);transition:width 0.25s ease;}
+    nav.links a:hover{color:var(--text);}
+    nav.links a:hover::after{width:100%;}
+
+    .board-head{
+      position:relative;z-index:2;
+      max-width:1200px;margin:0 auto;padding:6vw 6vw 1.5vw;
+    }
+    .eyebrow{
+      display:inline-flex;align-items:center;gap:8px;
+      font-family:'JetBrains Mono',monospace;font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;
+      color:var(--yellow);background:rgba(255,210,63,0.08);border:1px solid rgba(255,210,63,0.25);
+      padding:6px 12px;border-radius:999px;margin-bottom:16px;
+    }
+    .board-head h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.2rem,4.5vw,3.2rem);letter-spacing:0.01em;margin-bottom:6px;}
+    .board-head p{color:var(--text-dim);font-size:0.95rem;}
+
+    .board{
+      position:relative;z-index:2;
+      max-width:1200px;margin:0 auto;padding:0 6vw 7vw;
+    }
+    table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+    thead th{
+      font-family:'JetBrains Mono',monospace;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;
+      color:var(--text-dim);text-align:left;padding:16px 18px;background:var(--panel-2);border-bottom:1px solid var(--line);
+    }
+    tbody td{
+      padding:16px 18px;border-bottom:1px solid var(--line);font-size:0.92rem;
+    }
+    tbody tr:last-child td{border-bottom:none;}
+    tbody tr{transition:background 0.15s ease;}
+    tbody tr:hover{background:rgba(255,210,63,0.04);}
+    td.num, td.time{font-family:'JetBrains Mono',monospace;color:var(--text);}
+    td.name{font-weight:600;}
+    td.station{color:var(--text-dim);}
+
+    .btn{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:9px 16px;border-radius:8px;
+      background:var(--yellow);color:#161116;
+      text-decoration:none;font-weight:700;font-size:0.85rem;
+      transition:transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow:0 6px 18px -6px rgba(255,210,63,0.5);
+    }
+    .btn:hover{transform:translateY(-2px);box-shadow:0 10px 22px -6px rgba(255,210,63,0.65);}
+
+    @media (max-width:800px){
+      table, thead, tbody, th, td, tr{display:block;}
+      thead{display:none;}
+      tbody tr{border-bottom:1px solid var(--line);padding:14px 16px;}
+      tbody td{border:none;padding:4px 0;display:flex;justify-content:space-between;gap:12px;}
+      tbody td::before{content:attr(data-label);color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:0.72rem;text-transform:uppercase;}
+    }
   </style>
 </head>
 <body>
-  <header>
-    <div style="font-weight:800">Railway Booking</div>
-    <nav>
+  <header class="nav">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="6" width="18" height="11" rx="2" fill="#FFD23F"/>
+          <circle cx="7.5" cy="19" r="2" fill="#EDEFF5"/>
+          <circle cx="16.5" cy="19" r="2" fill="#EDEFF5"/>
+          <rect x="6" y="8.5" width="4" height="4" rx="0.6" fill="#0A0E16"/>
+          <rect x="14" y="8.5" width="4" height="4" rx="0.6" fill="#0A0E16"/>
+        </svg>
+      </div>
+      <span>Railway Booking</span>
+    </div>
+    <nav class="links">
       <a href="../index.html">Home</a>
       <a href="train.php">Demo</a>
       <a href="login.html">Logout</a>
     </nav>
   </header>
 
-  <h1>Train Details</h1>
-  <table>
-    <thead>
-      <tr>
-        <th>Train Number</th><th>Train Name</th><th>Source</th><th>Departure</th><th>Duration</th><th>Arrival</th><th>Destination</th><th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      <?php foreach($trains as $t){ ?>
-      <tr>
-        <td><?=htmlspecialchars($t[0])?></td>
-        <td><?=htmlspecialchars($t[1])?></td>
-        <td><?=htmlspecialchars($t[2])?></td>
-        <td><?=htmlspecialchars($t[3])?></td>
-        <td><?=htmlspecialchars($t[4])?></td>
-        <td><?=htmlspecialchars($t[5])?></td>
-        <td><?=htmlspecialchars($t[6])?></td>
-        <td><a class="btn" href="seat.php?train_no=<?=urlencode($t[0])?>">Select Seats</a></td>
-      </tr>
-      <?php } ?>
-    </tbody>
-  </table>
+  <section class="board-head">
+    <div class="eyebrow">Departures &middot; Live board</div>
+    <h1>Train Details</h1>
+    <p>Pick a train to view seat availability.</p>
+  </section>
+
+  <section class="board">
+    <table>
+      <thead>
+        <tr>
+          <th>Train Number</th><th>Train Name</th><th>Source</th><th>Departure</th><th>Duration</th><th>Arrival</th><th>Destination</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php foreach($trains as $t){ ?>
+        <tr>
+          <td class="num mono" data-label="Train No"><?=htmlspecialchars($t[0])?></td>
+          <td class="name" data-label="Name"><?=htmlspecialchars($t[1])?></td>
+          <td class="station" data-label="Source"><?=htmlspecialchars($t[2])?></td>
+          <td class="time mono" data-label="Departure"><?=htmlspecialchars($t[3])?></td>
+          <td class="time mono" data-label="Duration"><?=htmlspecialchars($t[4])?></td>
+          <td class="time mono" data-label="Arrival"><?=htmlspecialchars($t[5])?></td>
+          <td class="station" data-label="Destination"><?=htmlspecialchars($t[6])?></td>
+          <td data-label="Action"><a class="btn" href="seat.php?train_no=<?=urlencode($t[0])?>">Select Seats</a></td>
+        </tr>
+        <?php } ?>
+      </tbody>
+    </table>
+  </section>
 </body>
 </html>
