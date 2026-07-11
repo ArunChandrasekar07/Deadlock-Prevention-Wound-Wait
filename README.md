@@ -16,6 +16,14 @@ Built from scratch — applying **Operating Systems concurrency theory** to a re
 
 <br/><br/>
 
+<a href="https://askdevmind.vercel.app">
+<img src="https://img.shields.io/badge/🚀%20Live%20Demo-DevMind-6366F1?style=for-the-badge"/>
+</a>
+
+<a href="https://github.com/ArunChandrasekar07/devmind">
+<img src="https://img.shields.io/badge/⭐%20Star%20on%20GitHub-black?style=for-the-badge"/>
+</a>
+
 [![PHP](https://img.shields.io/badge/PHP-8.0+-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://mysql.com)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
