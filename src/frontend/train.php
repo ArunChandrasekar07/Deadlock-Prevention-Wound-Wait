@@ -1,13 +1,21 @@
 <?php
 require_once __DIR__ . "/../backend/session_guard.php";
+require_once __DIR__ . "/../backend/db.php";
 require_login();
 
-// Demo page: list trains
-$trains = [
-  ["12345","Express Train A","Station A","08:00","02:30","10:30","Station B"],
-  ["54321","Local Train C","Station E","10:00","01:15","11:15","Station F"],
-  ["98765","High-Speed Train D","Station G","11:30","01:50","13:20","Station H"]
-];
+// Fetch trains from Supabase
+$conn = db_connect();
+
+$trains = [];
+$result = pg_query($conn, "SELECT train_no, name, source, departure, duration, arrival, destination FROM trains ORDER BY train_no");
+
+if ($result === false) {
+    error_log("train.php query failed: " . pg_last_error($conn));
+} else {
+    while ($row = pg_fetch_row($result)) {
+        $trains[] = $row;
+    }
+}
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
