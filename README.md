@@ -17,7 +17,7 @@ Built from scratch — applying **Operating Systems concurrency theory** to a re
 <br/>
 <br>
 
-<a href="https://askdevmind.vercel.app">
+<a href="https://deadlock-prevention-wound-wait.onrender.com/">
 <img src="https://img.shields.io/badge/🚀%20Live%20Demo-DevMind-6366F1?style=for-the-badge"/>
 </a>
 
