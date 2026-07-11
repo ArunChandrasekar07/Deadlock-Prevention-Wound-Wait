@@ -14,7 +14,18 @@ Built from scratch — applying **Operating Systems concurrency theory** to a re
 
 <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=18&duration=2600&pause=900&color=FF6B6B&center=true&vCenter=true&width=850&lines=Deadlock+Prevention;Wound-Wait+Algorithm;Row-Level+Locking;Concurrent+Transaction+Management" />
 
-<br/><br/>
+<br/>
+<br>
+
+<a href="https://deadlock-prevention-wound-wait.onrender.com/">
+<img src="https://img.shields.io/badge/🚀%20Live%20Demo-DEADLOCK-6366F1?style=for-the-badge"/>
+</a>
+
+<a href="https://github.com/ArunChandrasekar07/Deadlock-Prevention-Wound-Wait">
+<img src="https://img.shields.io/badge/⭐%20Star%20on%20GitHub-black?style=for-the-badge"/>
+</a>
+
+<br><br>
 
 [![PHP](https://img.shields.io/badge/PHP-8.0+-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://mysql.com)
